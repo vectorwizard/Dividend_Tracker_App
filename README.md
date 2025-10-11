@@ -1,68 +1,78 @@
-# Dividend Tracker App
+# Dividend Tracker App - Indian Stock Market Edition
 
-A comprehensive end-to-end application for tracking dividend income, yield, payment dates, payout history, and future dividend estimates. This project provides a complete framework for dividend investors to monitor and analyze their dividend-paying stock portfolio.
+A comprehensive end-to-end application for tracking dividend income, yield, payment dates, payout history, and future dividend estimates for the **Indian Stock Market (NSE/BSE)**. This project provides a complete framework for dividend investors to monitor and analyze their dividend-paying stock portfolio in **Indian Rupees (INR)**.
 
 ## Features
 
 ### Core Functionality
-- **Portfolio Management**: Track multiple stocks with purchase prices, current prices, and share quantities
-- **Dividend Income Tracking**: Calculate total dividend income (monthly, yearly, lifetime)
+
+- **Portfolio Management**: Track multiple Indian stocks with purchase prices, current prices, and share quantities
+- **Dividend Income Tracking**: Calculate total dividend income (monthly, yearly, lifetime) in INR
 - **Dividend Yield Analysis**: Calculate dividend yield for individual stocks and entire portfolio
 - **Payment Date Tracking**: Monitor upcoming dividend payments and track payment history
 - **Historical Data**: Store and display complete payout history per stock
 - **Future Income Estimation**: Project future dividend income based on current holdings and schedules
 - **Dividend Growth Analysis**: Calculate dividend growth rates over time
+- **INR Currency Formatting**: Proper formatting with ₹ symbol and Indian numbering conventions
 
 ## Project Structure
 
 ```
 Dividend_Tracker_App/
 ├── models.py           # Data models for stocks, dividends, and portfolios
-├── calculator.py       # Calculation functions for dividend analytics
-├── sample_data.py      # Sample dataset for demonstration
-├── example_usage.py    # Comprehensive usage examples
+├── calculator.py       # Calculation functions for dividend analytics (with INR support)
+├── sample_data.py      # Sample dataset with Indian stocks (RELIANCE, TCS, HDFCBANK, INFY)
+├── example_usage.py    # Comprehensive usage examples for Indian market
 └── README.md          # This file
 ```
 
 ## Data Models
 
 ### Stock
+
 Represents a stock in the portfolio with the following attributes:
-- `ticker`: Stock ticker symbol (e.g., 'AAPL')
-- `name`: Company name
+
+- `ticker`: Stock ticker symbol (e.g., 'RELIANCE', 'TCS', 'HDFCBANK', 'INFY')
+- `name`: Company name (e.g., 'Reliance Industries Limited')
 - `shares`: Number of shares owned
-- `purchase_price`: Average purchase price per share
-- `current_price`: Current market price per share
-- `currency`: Currency for prices (default: USD)
+- `purchase_price`: Average purchase price per share (in INR)
+- `current_price`: Current market price per share (in INR)
+- `currency`: Currency for prices (default: INR)
 
 **Calculated Properties:**
-- `total_value`: Total value of holdings (shares × current_price)
-- `total_cost`: Total cost basis (shares × purchase_price)
-- `unrealized_gain`: Unrealized gain/loss
+
+- `total_value`: Total value of holdings (shares × current_price) in INR
+- `total_cost`: Total cost basis (shares × purchase_price) in INR
+- `unrealized_gain`: Unrealized gain/loss in INR
+- `unrealized_gain_percentage`: Unrealized gain/loss as percentage
 
 ### Dividend
-Represents a dividend payment with:
+
+Represents a dividend payment:
+
 - `ticker`: Stock ticker symbol
 - `payment_date`: Date dividend was/will be paid
-- `amount_per_share`: Dividend amount per share
-- `shares_owned`: Number of shares owned at ex-dividend date
-- `payment_status`: 'paid', 'pending', or 'announced'
+- `amount_per_share`: Dividend amount per share in INR
+- `shares`: Number of shares owned at payment
 
 **Calculated Properties:**
-- `total_amount`: Total dividend payment
-- `is_upcoming`: Whether dividend is upcoming
-- `is_paid`: Whether dividend has been paid
+
+- `total_amount`: Total dividend payment (amount_per_share × shares) in INR
 
 ### DividendSchedule
-Represents the dividend schedule for a stock:
+
+Represents expected dividend schedule for a stock:
+
 - `ticker`: Stock ticker symbol
-- `frequency`: 'quarterly', 'monthly', 'annual', or 'semi-annual'
-- `typical_amount`: Typical dividend amount per share
+- `frequency`: Payment frequency ('monthly', 'quarterly', 'semi-annual', 'annual')
+- `typical_amount`: Typical dividend amount per share in INR
 - `last_ex_dividend_date`: Last ex-dividend date
 - `next_payment_date`: Next expected payment date
 
 ### Portfolio
-Container for stocks and dividend history:
+
+Container for stocks, dividends, and schedules:
+
 - `name`: Portfolio name
 - `stocks`: List of Stock objects
 - `dividends`: List of Dividend objects
@@ -70,35 +80,113 @@ Container for stocks and dividend history:
 
 ## Calculator Functions
 
-The `calculator.py` module provides comprehensive functions for dividend analysis:
+### Currency Formatting
+
+```python
+format_inr(amount: Decimal) -> str
+```
+Format amount in Indian Rupees with ₹ symbol and proper comma separators.
+
+**Example:**
+```python
+format_inr(Decimal('125000.50'))  # Returns: "₹125,000.50"
+```
 
 ### Income Calculations
-- `calculate_total_dividend_income(portfolio, start_date, end_date)`: Calculate dividend income for any period
-- `calculate_monthly_dividend_income(portfolio, year, month)`: Calculate income for a specific month
-- `calculate_yearly_dividend_income(portfolio, year)`: Calculate income for a specific year
-- `calculate_lifetime_dividend_income(portfolio)`: Calculate total income since inception
+
+```python
+calculate_total_dividend_income(
+    portfolio: Portfolio,
+    start_date: Optional[date] = None,
+    end_date: Optional[date] = None
+) -> Decimal
+```
+Calculate total dividend income for a given period (in INR).
+
+```python
+calculate_annual_dividend_income(portfolio: Portfolio) -> Decimal
+```
+Calculate expected annual dividend income based on schedules (in INR).
 
 ### Yield Calculations
-- `calculate_dividend_yield(stock, annual_dividend_per_share)`: Calculate yield for a stock
-- `calculate_portfolio_dividend_yield(portfolio)`: Calculate weighted average yield for portfolio
 
-### Tracking & Analysis
-- `get_upcoming_dividends(portfolio, days_ahead)`: Get list of upcoming dividend payments
-- `get_dividend_history_by_stock(portfolio, ticker)`: Get complete payment history for a stock
-- `calculate_annual_dividend_summary(portfolio)`: Get dividend income summary by year
-- `calculate_monthly_breakdown(portfolio, year)`: Get monthly breakdown for a year
+```python
+calculate_dividend_yield(
+    stock: Stock,
+    annual_dividend_per_share: Decimal
+) -> Decimal
+```
+Calculate dividend yield for a stock as percentage.
+
+```python
+calculate_portfolio_dividend_yield(portfolio: Portfolio) -> Decimal
+```
+Calculate weighted average dividend yield for entire portfolio.
 
 ### Projections
-- `estimate_future_dividend_income(portfolio, months_ahead)`: Estimate future income
-- `get_dividend_growth_rate(portfolio, ticker, years)`: Calculate dividend growth rate
 
-## Installation & Setup
+```python
+project_dividend_income(
+    portfolio: Portfolio,
+    months: int,
+    growth_rate: Decimal = Decimal('0')
+) -> List[Tuple[date, Decimal]]
+```
+Project future dividend income month by month with optional growth rate.
 
-### Requirements
-- Python 3.7 or higher
-- No external dependencies required (uses only Python standard library)
+### Analysis
 
-### Quick Start
+```python
+calculate_dividend_growth_rate(
+    portfolio: Portfolio,
+    ticker: str,
+    years: int = 3
+) -> Optional[Decimal]
+```
+Calculate historical dividend growth rate for a stock.
+
+```python
+generate_dividend_summary(portfolio: Portfolio) -> Dict[str, any]
+```
+Generate comprehensive dividend summary with all metrics (all amounts in INR).
+
+## Sample Data
+
+The `sample_data.py` module provides pre-configured portfolios with Indian stocks:
+
+### create_sample_portfolio()
+
+Creates a sample portfolio containing:
+
+1. **Reliance Industries (RELIANCE)**
+   - 50 shares
+   - Purchase price: ₹2,400.00
+   - Current price: ₹2,650.00
+   - Semi-annual dividends: ₹8.00 per share
+
+2. **Tata Consultancy Services (TCS)**
+   - 30 shares
+   - Purchase price: ₹3,200.00
+   - Current price: ₹3,750.00
+   - Quarterly dividends: ₹27.00 per share
+
+3. **HDFC Bank (HDFCBANK)**
+   - 40 shares
+   - Purchase price: ₹1,550.00
+   - Current price: ₹1,680.00
+   - Quarterly dividends: ₹19.50 per share
+
+4. **Infosys (INFY)**
+   - 60 shares
+   - Purchase price: ₹1,420.00
+   - Current price: ₹1,580.00
+   - Quarterly dividends: ₹20.00 per share
+
+### create_minimal_portfolio()
+
+Creates a minimal portfolio with a single stock (TCS) for basic testing.
+
+## Installation
 
 1. Clone the repository:
 ```bash
@@ -106,209 +194,157 @@ git clone https://github.com/vectorwizard/Dividend_Tracker_App.git
 cd Dividend_Tracker_App
 ```
 
-2. Run the example:
-```bash
-python example_usage.py
-```
+2. Ensure you have Python 3.7+ installed with the required standard libraries:
+   - `datetime`
+   - `decimal`
+   - `dataclasses`
+   - `typing`
+   - `calendar`
 
-## Usage Examples
+No external dependencies are required.
 
-### Basic Usage
+## Usage
 
-```python
-from models import Stock, Dividend, DividendSchedule, Portfolio
-from calculator import calculate_dividend_yield, calculate_lifetime_dividend_income
-from datetime import date
-from decimal import Decimal
-
-# Create a portfolio
-portfolio = Portfolio(name="My Dividend Portfolio")
-
-# Add a stock
-aapl = Stock(
-    ticker="AAPL",
-    name="Apple Inc.",
-    shares=Decimal('100'),
-    purchase_price=Decimal('150.00'),
-    current_price=Decimal('175.00')
-)
-portfolio.add_stock(aapl)
-
-# Add dividend schedule
-aapl_schedule = DividendSchedule(
-    ticker="AAPL",
-    frequency="quarterly",
-    typical_amount=Decimal('0.24'),
-    next_payment_date=date(2025, 11, 14)
-)
-portfolio.add_schedule(aapl_schedule)
-
-# Record a dividend payment
-dividend = Dividend(
-    ticker="AAPL",
-    payment_date=date(2025, 8, 14),
-    amount_per_share=Decimal('0.24'),
-    shares_owned=Decimal('100'),
-    payment_status="paid"
-)
-portfolio.add_dividend(dividend)
-
-# Calculate dividend yield
-annual_dividend = aapl_schedule.typical_amount * Decimal('4')  # Quarterly * 4
-yield_pct = calculate_dividend_yield(aapl, annual_dividend)
-print(f"Dividend Yield: {yield_pct:.2f}%")
-
-# Calculate lifetime income
-lifetime_income = calculate_lifetime_dividend_income(portfolio)
-print(f"Lifetime Dividend Income: ${lifetime_income:.2f}")
-```
-
-### Advanced Features
+### Basic Example
 
 ```python
+from sample_data import create_sample_portfolio
 from calculator import (
-    get_upcoming_dividends,
-    estimate_future_dividend_income,
+    calculate_annual_dividend_income,
     calculate_portfolio_dividend_yield,
-    get_dividend_growth_rate
+    format_inr
 )
 
-# Get upcoming dividends in next 30 days
-upcoming = get_upcoming_dividends(portfolio, days_ahead=30)
-for div in upcoming:
-    print(f"{div.ticker}: ${div.total_amount:.2f} on {div.payment_date}")
+# Create a sample portfolio with Indian stocks
+portfolio = create_sample_portfolio()
 
-# Estimate income for next 12 months
-future_income = estimate_future_dividend_income(portfolio, months_ahead=12)
-print(f"Estimated 12-month income: ${future_income:.2f}")
+# Calculate annual dividend income
+annual_income = calculate_annual_dividend_income(portfolio)
+print(f"Expected Annual Income: {format_inr(annual_income)}")
 
 # Calculate portfolio yield
 portfolio_yield = calculate_portfolio_dividend_yield(portfolio)
 print(f"Portfolio Yield: {portfolio_yield:.2f}%")
 
-# Calculate dividend growth rate
-growth_rate = get_dividend_growth_rate(portfolio, "AAPL", years=3)
-if growth_rate:
-    print(f"3-Year Dividend Growth: {growth_rate:.2f}%")
+# Get total portfolio value
+total_value = portfolio.total_portfolio_value
+print(f"Total Portfolio Value: {format_inr(total_value)}")
 ```
 
-## Sample Dataset
+### Running the Example Script
 
-The `sample_data.py` file provides a complete example portfolio with:
-
-- **4 Stocks**: AAPL, MSFT, KO, JNJ
-- **Historical Dividends**: Past year of dividend payments for all stocks
-- **Upcoming Dividends**: Pending dividend payments
-- **Dividend Schedules**: Payment frequency and amounts for each stock
-
-Run the sample data:
-```bash
-python sample_data.py
-```
-
-## Comprehensive Example
-
-The `example_usage.py` file demonstrates all features:
-
-- Portfolio overview with stock details
-- Dividend yield calculations
-- Income tracking (lifetime, yearly, monthly)
-- Upcoming dividend payments
-- Historical dividend tracking
-- Future income projections
-- Summary statistics and ROI
-
-Run the comprehensive example:
 ```bash
 python example_usage.py
 ```
 
-Expected output includes:
-- Stock holdings with values and gains/losses
-- Portfolio-level dividend yield
-- Historical dividend income by year and month
-- Upcoming payment schedule
-- Complete payment history per stock
-- Future income estimates (6, 12, 24 months)
-- Summary statistics including dividend ROI
+This will demonstrate all features including:
+- Portfolio overview with stock holdings
+- Dividend income analysis (YTD, annual, historical)
+- Dividend yield by stock
+- Recent dividend history
+- Future income projections
+- Comprehensive summary
+- Dividend growth analysis
 
-## Extension Ideas
+### Creating Your Own Portfolio
 
-This project is designed for easy extension. Consider adding:
+```python
+from decimal import Decimal
+from datetime import date
+from models import Stock, Dividend, DividendSchedule, Portfolio
 
-### Data Management
-- JSON/CSV import/export functionality
-- Database integration (SQLite, PostgreSQL)
-- Data persistence layer
+# Create a new portfolio
+my_portfolio = Portfolio(name="My Indian Dividend Portfolio")
 
-### Data Sources
-- API integration for automatic stock price updates
-- Automatic dividend data fetching
-- Real-time market data integration
+# Add a stock (example: ITC)
+itc = Stock(
+    ticker="ITC",
+    name="ITC Limited",
+    shares=Decimal('100'),
+    purchase_price=Decimal('420.00'),
+    current_price=Decimal('445.00'),
+    currency="INR"
+)
+my_portfolio.add_stock(itc)
 
-### Reporting & Visualization
-- PDF report generation
-- Charts and graphs (using matplotlib, plotly)
-- Email notifications for upcoming dividends
-- Web dashboard (Flask, Django, Streamlit)
+# Add dividend schedule
+itc_schedule = DividendSchedule(
+    ticker="ITC",
+    frequency="quarterly",
+    typical_amount=Decimal('6.25'),  # ₹6.25 per share per quarter
+    last_ex_dividend_date=date(2024, 9, 20),
+    next_payment_date=date(2025, 1, 5)
+)
+my_portfolio.add_schedule(itc_schedule)
 
-### Advanced Features
-- Tax tracking and reporting
-- Currency conversion for international stocks
-- DRIP (Dividend Reinvestment Plan) tracking
-- Performance benchmarking
-- Multi-portfolio support
-- Portfolio optimization suggestions
+# Add historical dividend
+my_portfolio.add_dividend(Dividend(
+    ticker="ITC",
+    payment_date=date(2024, 10, 5),
+    amount_per_share=Decimal('6.25'),
+    shares=Decimal('100')
+))
+```
 
-### User Interface
-- Command-line interface (CLI)
-- Web interface
-- Mobile app
-- Desktop GUI (tkinter, PyQt)
+## Key Features for Indian Market
 
-## Data Accuracy Note
+1. **INR Currency Support**: All calculations and formatting use Indian Rupees
+2. **Indian Stock Tickers**: Pre-configured examples use NSE stock symbols (RELIANCE, TCS, HDFCBANK, INFY)
+3. **Realistic Dividend Data**: Sample data uses realistic dividend amounts and frequencies for Indian companies
+4. **Local Date Formatting**: Dates formatted for Indian context
+5. **Comprehensive Analytics**: Full suite of dividend tracking and analysis tools
 
-This is a tracking and calculation framework. Users are responsible for:
-- Entering accurate stock purchase prices
-- Recording actual dividend payments received
-- Updating current stock prices
-- Maintaining correct dividend schedules
+## Output Examples
 
-For real-time data, consider integrating with financial APIs such as:
-- Alpha Vantage
-- Yahoo Finance (yfinance)
-- IEX Cloud
-- Polygon.io
+When running `example_usage.py`, you'll see output like:
 
-## Contributing
+```
+======================================================================
+DIVIDEND TRACKER APP - INDIAN STOCK MARKET EDITION
+Currency: Indian Rupees (INR)
+======================================================================
 
-Contributions are welcome! Areas for improvement:
-- Additional calculator functions
-- More comprehensive data validation
-- Unit tests
-- Documentation enhancements
-- Example scripts for specific use cases
+Portfolio: Sample Indian Dividend Portfolio
+Total Portfolio Value: ₹2,95,500.00
+
+======================================================================
+STOCK HOLDINGS
+======================================================================
+
+Reliance Industries Limited (RELIANCE):
+  Shares Owned: 50
+  Current Price: ₹2,650.00 per share
+  Total Value: ₹1,32,500.00
+  Dividend Yield: 0.60%
+
+Tata Consultancy Services Limited (TCS):
+  Shares Owned: 30
+  Current Price: ₹3,750.00 per share
+  Total Value: ₹1,12,500.00
+  Dividend Yield: 2.88%
+
+...
+
+Expected Annual Dividend Income: ₹10,840.00
+Portfolio Dividend Yield: 3.67%
+```
 
 ## License
 
-This project is open source and available under the MIT License.
+This project is open source and available for personal and educational use.
+
+## Contributing
+
+Contributions are welcome! Feel free to:
+- Add more Indian stocks to the sample data
+- Improve calculation functions
+- Add new analytics features
+- Enhance documentation
 
 ## Author
 
 vectorwizard
 
-## Version History
+## Currency Note
 
-- **v1.0.0** (2025-10-11): Initial release
-  - Core data models
-  - Comprehensive calculator functions
-  - Sample data and usage examples
-  - Complete documentation
-
-## Support
-
-For questions, issues, or suggestions, please open an issue on the GitHub repository.
-
----
-
-**Happy Dividend Tracking!** 📈💰
+All amounts throughout this application are in **Indian Rupees (INR)** unless otherwise specified. The ₹ symbol is used consistently for currency formatting.
