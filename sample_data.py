@@ -5,7 +5,6 @@ how to use the dividend tracking system.
 from datetime import date, timedelta
 from decimal import Decimal
 from models import Stock, Dividend, DividendSchedule, Portfolio
-from calculator import DividendCalculator
 
 def create_sample_portfolio() -> Portfolio:
     """Create a sample portfolio with example Indian stocks and dividend data.
