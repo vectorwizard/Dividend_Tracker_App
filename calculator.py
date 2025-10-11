@@ -1,15 +1,23 @@
 """Calculator functions for dividend tracking and analysis
-
 This module provides functions for calculating dividend income,
 yield, projections, and other analytics.
 """
-
 from datetime import date, timedelta
 from typing import List, Dict, Optional, Tuple
 from decimal import Decimal
 from calendar import monthrange
 from models import Portfolio, Stock, Dividend, DividendSchedule
 
+def format_inr(amount: Decimal) -> str:
+    """Format amount in Indian Rupees (INR) with proper currency symbol.
+    
+    Args:
+        amount: Amount to format
+    
+    Returns:
+        Formatted string with ₹ symbol and comma separators
+    """
+    return f"₹{amount:,.2f}"
 
 def calculate_total_dividend_income(
     portfolio: Portfolio,
@@ -24,7 +32,7 @@ def calculate_total_dividend_income(
         end_date: End date of period (None = today)
     
     Returns:
-        Total dividend income as Decimal
+        Total dividend income as Decimal (in INR)
     """
     if end_date is None:
         end_date = date.today()
@@ -35,73 +43,37 @@ def calculate_total_dividend_income(
             continue
         if dividend.payment_date > end_date:
             continue
-        if dividend.payment_status == "paid" or dividend.is_paid:
-            total += dividend.total_amount
+        total += dividend.total_amount
     
     return total
 
-
-def calculate_monthly_dividend_income(
-    portfolio: Portfolio,
-    year: int,
-    month: int
-) -> Decimal:
-    """Calculate dividend income for a specific month.
+def calculate_annual_dividend_income(portfolio: Portfolio) -> Decimal:
+    """Calculate expected annual dividend income based on schedules.
     
     Args:
-        portfolio: Portfolio containing dividend history
-        year: Year (e.g., 2025)
-        month: Month (1-12)
+        portfolio: Portfolio containing stocks and dividend schedules
     
     Returns:
-        Total dividend income for the month
+        Expected annual dividend income as Decimal (in INR)
     """
-    first_day = date(year, month, 1)
-    last_day = date(year, month, monthrange(year, month)[1])
-    return calculate_total_dividend_income(portfolio, first_day, last_day)
-
-
-def calculate_yearly_dividend_income(
-    portfolio: Portfolio,
-    year: int
-) -> Decimal:
-    """Calculate dividend income for a specific year.
+    total_annual = Decimal('0')
     
-    Args:
-        portfolio: Portfolio containing dividend history
-        year: Year (e.g., 2025)
+    for ticker, schedule in portfolio.schedules.items():
+        stock = portfolio.get_stock(ticker)
+        if stock:
+            annual_frequency = schedule.get_annual_frequency()
+            annual_dividend_per_share = schedule.typical_amount * Decimal(str(annual_frequency))
+            annual_total = annual_dividend_per_share * stock.shares
+            total_annual += annual_total
     
-    Returns:
-        Total dividend income for the year
-    """
-    start_date = date(year, 1, 1)
-    end_date = date(year, 12, 31)
-    return calculate_total_dividend_income(portfolio, start_date, end_date)
+    return total_annual
 
-
-def calculate_lifetime_dividend_income(
-    portfolio: Portfolio
-) -> Decimal:
-    """Calculate total dividend income since inception.
-    
-    Args:
-        portfolio: Portfolio containing dividend history
-    
-    Returns:
-        Lifetime dividend income
-    """
-    return calculate_total_dividend_income(portfolio)
-
-
-def calculate_dividend_yield(
-    stock: Stock,
-    annual_dividend_per_share: Decimal
-) -> Decimal:
+def calculate_dividend_yield(stock: Stock, annual_dividend_per_share: Decimal) -> Decimal:
     """Calculate dividend yield for a stock.
     
     Args:
-        stock: Stock object
-        annual_dividend_per_share: Annual dividend per share
+        stock: Stock to calculate yield for
+        annual_dividend_per_share: Annual dividend per share (in INR)
     
     Returns:
         Dividend yield as percentage (e.g., 3.5 for 3.5%)
@@ -109,17 +81,14 @@ def calculate_dividend_yield(
     if stock.current_price == 0:
         return Decimal('0')
     
-    yield_decimal = (annual_dividend_per_share / stock.current_price) * Decimal('100')
-    return yield_decimal.quantize(Decimal('0.01'))
+    yield_value = (annual_dividend_per_share / stock.current_price) * Decimal('100')
+    return yield_value
 
-
-def calculate_portfolio_dividend_yield(
-    portfolio: Portfolio
-) -> Decimal:
+def calculate_portfolio_dividend_yield(portfolio: Portfolio) -> Decimal:
     """Calculate weighted average dividend yield for entire portfolio.
     
     Args:
-        portfolio: Portfolio containing stocks
+        portfolio: Portfolio to calculate yield for
     
     Returns:
         Portfolio dividend yield as percentage
@@ -128,182 +97,146 @@ def calculate_portfolio_dividend_yield(
     if total_value == 0:
         return Decimal('0')
     
-    weighted_yield = Decimal('0')
-    for stock in portfolio.stocks:
-        if stock.ticker in portfolio.schedules:
-            schedule = portfolio.schedules[stock.ticker]
-            annual_dividend = schedule.typical_amount * Decimal(schedule.get_annual_frequency())
-            stock_yield = calculate_dividend_yield(stock, annual_dividend)
-            weight = stock.total_value / total_value
-            weighted_yield += stock_yield * weight
-    
-    return weighted_yield.quantize(Decimal('0.01'))
+    annual_income = calculate_annual_dividend_income(portfolio)
+    yield_value = (annual_income / total_value) * Decimal('100')
+    return yield_value
 
-
-def get_upcoming_dividends(
+def project_dividend_income(
     portfolio: Portfolio,
-    days_ahead: int = 30
-) -> List[Dividend]:
-    """Get list of upcoming dividend payments.
-    
-    Args:
-        portfolio: Portfolio containing dividend history
-        days_ahead: Number of days to look ahead
-    
-    Returns:
-        List of upcoming Dividend objects
-    """
-    today = date.today()
-    cutoff_date = today + timedelta(days=days_ahead)
-    
-    upcoming = [
-        div for div in portfolio.dividends
-        if div.is_upcoming and div.payment_date <= cutoff_date
-    ]
-    
-    # Sort by payment date
-    upcoming.sort(key=lambda d: d.payment_date)
-    return upcoming
-
-
-def get_dividend_history_by_stock(
-    portfolio: Portfolio,
-    ticker: str
+    months: int,
+    growth_rate: Decimal = Decimal('0')
 ) -> List[Tuple[date, Decimal]]:
-    """Get dividend payment history for a specific stock.
+    """Project future dividend income month by month.
     
     Args:
-        portfolio: Portfolio containing dividend history
-        ticker: Stock ticker symbol
+        portfolio: Portfolio to project from
+        months: Number of months to project
+        growth_rate: Annual dividend growth rate as percentage (e.g., 10 for 10%)
     
     Returns:
-        List of (payment_date, amount) tuples
+        List of tuples (date, projected_income)
     """
-    dividends = portfolio.get_dividends_for_stock(ticker)
-    history = [
-        (div.payment_date, div.total_amount)
-        for div in dividends
-        if div.is_paid
-    ]
-    history.sort(key=lambda x: x[0])
-    return history
+    projections = []
+    current_date = date.today()
+    monthly_growth = (Decimal('1') + (growth_rate / Decimal('100'))) ** (Decimal('1') / Decimal('12'))
+    
+    for month_offset in range(months):
+        # Calculate the target month
+        target_month = current_date.month + month_offset
+        target_year = current_date.year + (target_month - 1) // 12
+        target_month = ((target_month - 1) % 12) + 1
+        
+        # Get last day of target month
+        last_day = monthrange(target_year, target_month)[1]
+        month_end = date(target_year, target_month, last_day)
+        
+        # Calculate expected income for this month
+        monthly_income = Decimal('0')
+        growth_factor = monthly_growth ** Decimal(str(month_offset))
+        
+        for ticker, schedule in portfolio.schedules.items():
+            stock = portfolio.get_stock(ticker)
+            if stock:
+                frequency = schedule.get_annual_frequency()
+                # Distribute annual dividends across expected payment months
+                monthly_expected = (schedule.typical_amount * stock.shares * 
+                                  Decimal(str(frequency)) / Decimal('12'))
+                monthly_income += monthly_expected * growth_factor
+        
+        projections.append((month_end, monthly_income))
+    
+    return projections
 
-
-def calculate_annual_dividend_summary(
-    portfolio: Portfolio
-) -> Dict[int, Decimal]:
-    """Calculate dividend income summary by year.
-    
-    Args:
-        portfolio: Portfolio containing dividend history
-    
-    Returns:
-        Dictionary mapping year -> total income
-    """
-    summary = {}
-    for dividend in portfolio.dividends:
-        if dividend.is_paid:
-            year = dividend.payment_date.year
-            if year not in summary:
-                summary[year] = Decimal('0')
-            summary[year] += dividend.total_amount
-    
-    return dict(sorted(summary.items()))
-
-
-def estimate_future_dividend_income(
-    portfolio: Portfolio,
-    months_ahead: int = 12
-) -> Decimal:
-    """Estimate future dividend income based on current holdings and schedules.
-    
-    Args:
-        portfolio: Portfolio with stocks and dividend schedules
-        months_ahead: Number of months to project
-    
-    Returns:
-        Estimated future dividend income
-    """
-    total_estimated = Decimal('0')
-    
-    for stock in portfolio.stocks:
-        if stock.ticker in portfolio.schedules:
-            schedule = portfolio.schedules[stock.ticker]
-            frequency = schedule.get_annual_frequency()
-            payments_in_period = (months_ahead / 12) * frequency
-            estimated = schedule.typical_amount * stock.shares * Decimal(payments_in_period)
-            total_estimated += estimated
-    
-    return total_estimated.quantize(Decimal('0.01'))
-
-
-def calculate_monthly_breakdown(
-    portfolio: Portfolio,
-    year: int
-) -> Dict[int, Decimal]:
-    """Calculate dividend income for each month of a year.
-    
-    Args:
-        portfolio: Portfolio containing dividend history
-        year: Year to analyze
-    
-    Returns:
-        Dictionary mapping month (1-12) -> income
-    """
-    breakdown = {}
-    for month in range(1, 13):
-        breakdown[month] = calculate_monthly_dividend_income(portfolio, year, month)
-    
-    return breakdown
-
-
-def get_dividend_growth_rate(
+def calculate_dividend_growth_rate(
     portfolio: Portfolio,
     ticker: str,
     years: int = 3
 ) -> Optional[Decimal]:
-    """Calculate dividend growth rate for a stock.
+    """Calculate historical dividend growth rate for a stock.
     
     Args:
         portfolio: Portfolio containing dividend history
-        ticker: Stock ticker symbol
-        years: Number of years to analyze
+        ticker: Stock ticker to analyze
+        years: Number of years to look back
     
     Returns:
         Average annual growth rate as percentage, or None if insufficient data
     """
     dividends = portfolio.get_dividends_for_stock(ticker)
-    if not dividends:
+    if len(dividends) < 2:
         return None
     
-    # Group by year
-    yearly_totals = {}
-    for div in dividends:
-        if div.is_paid:
-            year = div.payment_date.year
-            if year not in yearly_totals:
-                yearly_totals[year] = Decimal('0')
-            yearly_totals[year] += div.amount_per_share
+    # Sort by payment date
+    sorted_dividends = sorted(dividends, key=lambda d: d.payment_date)
     
-    if len(yearly_totals) < 2:
+    # Calculate year-over-year growth rates
+    growth_rates = []
+    for i in range(1, len(sorted_dividends)):
+        if sorted_dividends[i-1].amount_per_share > 0:
+            rate = ((sorted_dividends[i].amount_per_share - 
+                    sorted_dividends[i-1].amount_per_share) / 
+                   sorted_dividends[i-1].amount_per_share) * Decimal('100')
+            growth_rates.append(rate)
+    
+    if not growth_rates:
         return None
     
-    # Calculate growth rates
-    sorted_years = sorted(yearly_totals.keys())
-    if len(sorted_years) < years:
-        years = len(sorted_years)
+    # Return average growth rate
+    return sum(growth_rates) / Decimal(str(len(growth_rates)))
+
+def generate_dividend_summary(portfolio: Portfolio) -> Dict[str, any]:
+    """Generate comprehensive dividend summary for portfolio.
     
-    relevant_years = sorted_years[-years:]
-    if len(relevant_years) < 2:
-        return None
+    Args:
+        portfolio: Portfolio to summarize
     
-    start_amount = yearly_totals[relevant_years[0]]
-    end_amount = yearly_totals[relevant_years[-1]]
+    Returns:
+        Dictionary containing various metrics and summaries (all amounts in INR)
+    """
+    today = date.today()
+    year_start = date(today.year, 1, 1)
     
-    if start_amount == 0:
-        return None
+    summary = {
+        'total_portfolio_value': portfolio.total_portfolio_value,
+        'total_portfolio_value_formatted': format_inr(portfolio.total_portfolio_value),
+        'annual_dividend_income': calculate_annual_dividend_income(portfolio),
+        'annual_dividend_income_formatted': format_inr(calculate_annual_dividend_income(portfolio)),
+        'ytd_dividend_income': calculate_total_dividend_income(portfolio, year_start, today),
+        'ytd_dividend_income_formatted': format_inr(calculate_total_dividend_income(portfolio, year_start, today)),
+        'portfolio_yield': calculate_portfolio_dividend_yield(portfolio),
+        'number_of_stocks': len(portfolio.stocks),
+        'total_dividends_received': len(portfolio.dividends),
+        'currency': 'INR',
+        'stocks': []
+    }
     
-    num_years = len(relevant_years) - 1
-    growth_rate = ((end_amount / start_amount) ** (Decimal('1') / Decimal(num_years)) - Decimal('1')) * Decimal('100')
+    # Add per-stock details
+    for stock in portfolio.stocks:
+        schedule = portfolio.schedules.get(stock.ticker)
+        if schedule:
+            annual_dividend_per_share = (schedule.typical_amount * 
+                                        Decimal(str(schedule.get_annual_frequency())))
+            stock_yield = calculate_dividend_yield(stock, annual_dividend_per_share)
+            annual_income = annual_dividend_per_share * stock.shares
+        else:
+            stock_yield = Decimal('0')
+            annual_income = Decimal('0')
+        
+        stock_info = {
+            'ticker': stock.ticker,
+            'name': stock.name,
+            'shares': stock.shares,
+            'current_price': stock.current_price,
+            'current_price_formatted': format_inr(stock.current_price),
+            'total_value': stock.total_value,
+            'total_value_formatted': format_inr(stock.total_value),
+            'annual_dividend_income': annual_income,
+            'annual_dividend_income_formatted': format_inr(annual_income),
+            'dividend_yield': stock_yield,
+            'unrealized_gain': stock.unrealized_gain,
+            'unrealized_gain_formatted': format_inr(stock.unrealized_gain),
+            'unrealized_gain_percentage': stock.unrealized_gain_percentage
+        }
+        summary['stocks'].append(stock_info)
     
-    return growth_rate.quantize(Decimal('0.01'))
+    return summary
