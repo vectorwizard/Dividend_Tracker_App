@@ -1,23 +1,20 @@
 """Data models for Dividend Tracker App
-
 This module defines the core data structures for tracking stocks and dividends.
 """
-
 from datetime import datetime, date
 from typing import List, Optional, Dict
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-
 @dataclass
 class Stock:
     """Represents a stock in the portfolio."""
-    ticker: str  # Stock ticker symbol (e.g., 'AAPL')
+    ticker: str  # Stock ticker symbol (e.g., 'RELIANCE')
     name: str  # Company name
     shares: Decimal  # Number of shares owned
     purchase_price: Decimal  # Average purchase price per share
     current_price: Decimal  # Current market price per share
-    currency: str = "USD"  # Currency for prices
+    currency: str = "INR"  # Currency for prices (Indian Rupees)
     
     @property
     def total_value(self) -> Decimal:
@@ -33,39 +30,33 @@ class Stock:
     def unrealized_gain(self) -> Decimal:
         """Calculate unrealized gain/loss."""
         return self.total_value - self.total_cost
-
+    
+    @property
+    def unrealized_gain_percentage(self) -> Decimal:
+        """Calculate unrealized gain/loss as percentage."""
+        if self.total_cost == 0:
+            return Decimal('0')
+        return (self.unrealized_gain / self.total_cost) * Decimal('100')
 
 @dataclass
 class Dividend:
     """Represents a dividend payment."""
     ticker: str  # Stock ticker symbol
     payment_date: date  # Date dividend was/will be paid
-    amount_per_share: Decimal  # Dividend amount per share
-    shares_owned: Decimal  # Number of shares owned at ex-dividend date
-    payment_status: str = "pending"  # 'paid', 'pending', 'announced'
+    amount_per_share: Decimal  # Dividend amount per share in INR
+    shares: Decimal  # Number of shares owned at payment
     
     @property
     def total_amount(self) -> Decimal:
         """Calculate total dividend payment."""
-        return self.amount_per_share * self.shares_owned
-    
-    @property
-    def is_upcoming(self) -> bool:
-        """Check if dividend is upcoming."""
-        return self.payment_date > date.today() and self.payment_status != "paid"
-    
-    @property
-    def is_paid(self) -> bool:
-        """Check if dividend has been paid."""
-        return self.payment_status == "paid" or self.payment_date < date.today()
-
+        return self.amount_per_share * self.shares
 
 @dataclass
 class DividendSchedule:
-    """Represents the dividend schedule for a stock."""
+    """Represents expected dividend schedule for a stock."""
     ticker: str  # Stock ticker symbol
-    frequency: str  # 'quarterly', 'monthly', 'annual', 'semi-annual'
-    typical_amount: Decimal  # Typical dividend amount per share
+    frequency: str  # Payment frequency (e.g., 'quarterly', 'annual')
+    typical_amount: Decimal  # Typical dividend amount per share in INR
     last_ex_dividend_date: Optional[date] = None  # Last ex-dividend date
     next_payment_date: Optional[date] = None  # Next expected payment date
     
@@ -78,7 +69,6 @@ class DividendSchedule:
             'annual': 1
         }
         return frequency_map.get(self.frequency.lower(), 4)
-
 
 @dataclass
 class Portfolio:
