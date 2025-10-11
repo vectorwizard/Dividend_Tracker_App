@@ -1,178 +1,168 @@
 """Example usage of the Dividend Tracker App
-
-This script demonstrates how to use all the features of the dividend tracking system.
+This script demonstrates how to use all the features of the dividend tracking system
+for tracking Indian stock market dividends in INR.
 """
-
 from datetime import date
 from decimal import Decimal
 from sample_data import create_sample_portfolio
 from calculator import (
     calculate_total_dividend_income,
-    calculate_monthly_dividend_income,
-    calculate_yearly_dividend_income,
-    calculate_lifetime_dividend_income,
+    calculate_annual_dividend_income,
     calculate_dividend_yield,
     calculate_portfolio_dividend_yield,
-    get_upcoming_dividends,
-    get_dividend_history_by_stock,
-    calculate_annual_dividend_summary,
-    estimate_future_dividend_income,
-    calculate_monthly_breakdown,
-    get_dividend_growth_rate
+    project_dividend_income,
+    calculate_dividend_growth_rate,
+    generate_dividend_summary,
+    format_inr
 )
 
+def print_separator():
+    """Print a visual separator."""
+    print("\n" + "="*70)
 
 def main():
-    """Main function demonstrating all dividend tracking features."""
+    """Main function demonstrating all dividend tracking features for Indian stocks."""
     
-    # Create sample portfolio
-    print("\n" + "="*70)
-    print("DIVIDEND TRACKER APP - EXAMPLE USAGE")
-    print("="*70 + "\n")
+    # Create sample portfolio with Indian stocks
+    print_separator()
+    print("DIVIDEND TRACKER APP - INDIAN STOCK MARKET EDITION")
+    print("Currency: Indian Rupees (INR)")
+    print_separator()
     
     portfolio = create_sample_portfolio()
     
-    print(f"Portfolio: {portfolio.name}")
-    print(f"Total Portfolio Value: ${portfolio.total_portfolio_value:,.2f}")
-    print("\n" + "-"*70 + "\n")
+    print(f"\nPortfolio: {portfolio.name}")
+    print(f"Number of stocks: {len(portfolio.stocks)}")
+    print(f"Total Portfolio Value: {format_inr(portfolio.total_portfolio_value)}")
     
-    # Display all stocks in portfolio
-    print("STOCKS IN PORTFOLIO:")
-    print("-"*70)
+    # Display individual stock holdings
+    print_separator()
+    print("STOCK HOLDINGS")
+    print_separator()
+    
     for stock in portfolio.stocks:
-        print(f"\n{stock.ticker} - {stock.name}")
-        print(f"  Shares: {stock.shares}")
-        print(f"  Purchase Price: ${stock.purchase_price:.2f}")
-        print(f"  Current Price: ${stock.current_price:.2f}")
-        print(f"  Total Value: ${stock.total_value:,.2f}")
-        print(f"  Unrealized Gain/Loss: ${stock.unrealized_gain:,.2f}")
-        
-        # Display dividend yield if schedule exists
-        if stock.ticker in portfolio.schedules:
-            schedule = portfolio.schedules[stock.ticker]
-            annual_dividend = schedule.typical_amount * Decimal(schedule.get_annual_frequency())
-            div_yield = calculate_dividend_yield(stock, annual_dividend)
-            print(f"  Dividend Yield: {div_yield:.2f}%")
-            print(f"  Annual Dividend: ${annual_dividend * stock.shares:.2f}")
+        print(f"\n{stock.name} ({stock.ticker}):")
+        print(f"  Shares Owned: {stock.shares}")
+        print(f"  Purchase Price: {format_inr(stock.purchase_price)} per share")
+        print(f"  Current Price: {format_inr(stock.current_price)} per share")
+        print(f"  Total Value: {format_inr(stock.total_value)}")
+        print(f"  Unrealized Gain/Loss: {format_inr(stock.unrealized_gain)} ({stock.unrealized_gain_percentage:.2f}%)")
     
-    print("\n" + "="*70 + "\n")
+    # Calculate and display dividend income
+    print_separator()
+    print("DIVIDEND INCOME ANALYSIS")
+    print_separator()
     
-    # Calculate portfolio dividend yield
+    # Year-to-date dividend income
+    year_start = date(date.today().year, 1, 1)
+    ytd_income = calculate_total_dividend_income(portfolio, year_start)
+    print(f"\nYear-to-Date Dividend Income: {format_inr(ytd_income)}")
+    
+    # Last 12 months dividend income
+    last_year = date.today().replace(year=date.today().year - 1)
+    last_12_months = calculate_total_dividend_income(portfolio, last_year)
+    print(f"Last 12 Months Dividend Income: {format_inr(last_12_months)}")
+    
+    # Expected annual dividend income
+    annual_income = calculate_annual_dividend_income(portfolio)
+    print(f"Expected Annual Dividend Income: {format_inr(annual_income)}")
+    
+    # Portfolio dividend yield
     portfolio_yield = calculate_portfolio_dividend_yield(portfolio)
-    print(f"PORTFOLIO DIVIDEND YIELD: {portfolio_yield:.2f}%")
-    print("\n" + "="*70 + "\n")
+    print(f"Portfolio Dividend Yield: {portfolio_yield:.2f}%")
     
-    # Display lifetime dividend income
-    lifetime_income = calculate_lifetime_dividend_income(portfolio)
-    print(f"LIFETIME DIVIDEND INCOME: ${lifetime_income:,.2f}")
-    print("\n" + "-"*70 + "\n")
+    # Display dividend yield by stock
+    print_separator()
+    print("DIVIDEND YIELD BY STOCK")
+    print_separator()
     
-    # Display yearly dividend summary
-    print("ANNUAL DIVIDEND SUMMARY:")
-    print("-"*70)
-    annual_summary = calculate_annual_dividend_summary(portfolio)
-    for year, amount in annual_summary.items():
-        print(f"  {year}: ${amount:,.2f}")
-    
-    print("\n" + "="*70 + "\n")
-    
-    # Display current year dividend income
-    current_year = date.today().year
-    current_year_income = calculate_yearly_dividend_income(portfolio, current_year)
-    print(f"DIVIDEND INCOME FOR {current_year}: ${current_year_income:,.2f}")
-    
-    # Display monthly breakdown for current year
-    print(f"\nMonthly Breakdown for {current_year}:")
-    print("-"*70)
-    monthly_breakdown = calculate_monthly_breakdown(portfolio, current_year)
-    month_names = [
-        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-    ]
-    for month, amount in monthly_breakdown.items():
-        if amount > 0:
-            print(f"  {month_names[month-1]}: ${amount:,.2f}")
-    
-    print("\n" + "="*70 + "\n")
-    
-    # Display upcoming dividends
-    print("UPCOMING DIVIDENDS (Next 60 days):")
-    print("-"*70)
-    upcoming = get_upcoming_dividends(portfolio, days_ahead=60)
-    if upcoming:
-        for div in upcoming:
-            print(f"\n  {div.ticker}:")
-            print(f"    Payment Date: {div.payment_date}")
-            print(f"    Amount per Share: ${div.amount_per_share:.2f}")
-            print(f"    Total Amount: ${div.total_amount:.2f}")
-            print(f"    Status: {div.payment_status}")
-    else:
-        print("  No upcoming dividends in the next 60 days.")
-    
-    print("\n" + "="*70 + "\n")
-    
-    # Display dividend history for each stock
-    print("DIVIDEND PAYMENT HISTORY BY STOCK:")
-    print("-"*70)
-    for stock in portfolio.stocks:
-        history = get_dividend_history_by_stock(portfolio, stock.ticker)
-        if history:
-            print(f"\n{stock.ticker}:")
-            total_received = Decimal('0')
-            for payment_date, amount in history:
-                print(f"  {payment_date}: ${amount:.2f}")
-                total_received += amount
-            print(f"  Total Received: ${total_received:.2f}")
+    for ticker, schedule in portfolio.schedules.items():
+        stock = portfolio.get_stock(ticker)
+        if stock:
+            annual_dividend_per_share = (schedule.typical_amount * 
+                                        Decimal(str(schedule.get_annual_frequency())))
+            stock_yield = calculate_dividend_yield(stock, annual_dividend_per_share)
+            annual_income_stock = annual_dividend_per_share * stock.shares
             
-            # Calculate dividend growth rate
-            growth_rate = get_dividend_growth_rate(portfolio, stock.ticker, years=3)
-            if growth_rate:
-                print(f"  3-Year Dividend Growth Rate: {growth_rate:.2f}%")
+            print(f"\n{stock.name} ({ticker}):")
+            print(f"  Dividend Frequency: {schedule.frequency.capitalize()}")
+            print(f"  Typical Payment: {format_inr(schedule.typical_amount)} per share")
+            print(f"  Annual Dividend (per share): {format_inr(annual_dividend_per_share)}")
+            print(f"  Annual Dividend Income: {format_inr(annual_income_stock)}")
+            print(f"  Dividend Yield: {stock_yield:.2f}%")
+            if schedule.next_payment_date:
+                print(f"  Next Payment Date: {schedule.next_payment_date.strftime('%d %B %Y')}")
     
-    print("\n" + "="*70 + "\n")
+    # Display dividend history
+    print_separator()
+    print("RECENT DIVIDEND HISTORY")
+    print_separator()
     
-    # Estimate future dividend income
-    print("FUTURE DIVIDEND INCOME PROJECTIONS:")
-    print("-"*70)
-    for months in [6, 12, 24]:
-        estimated = estimate_future_dividend_income(portfolio, months)
-        years = months / 12
-        print(f"  Next {months} months ({years:.1f} year{'s' if years != 1 else ''}): ${estimated:,.2f}")
+    recent_dividends = sorted(portfolio.dividends, key=lambda d: d.payment_date, reverse=True)[:10]
+    for dividend in recent_dividends:
+        stock = portfolio.get_stock(dividend.ticker)
+        stock_name = stock.name if stock else dividend.ticker
+        print(f"\n{dividend.payment_date.strftime('%d %b %Y')} - {stock_name} ({dividend.ticker}):")
+        print(f"  Amount per share: {format_inr(dividend.amount_per_share)}")
+        print(f"  Shares: {dividend.shares}")
+        print(f"  Total payment: {format_inr(dividend.total_amount)}")
     
-    print("\n" + "="*70 + "\n")
+    # Project future dividend income
+    print_separator()
+    print("DIVIDEND INCOME PROJECTION (Next 12 Months)")
+    print_separator()
     
-    # Display summary statistics
-    print("SUMMARY STATISTICS:")
-    print("-"*70)
-    total_stocks = len(portfolio.stocks)
-    total_dividends_recorded = len([d for d in portfolio.dividends if d.is_paid])
-    total_upcoming = len(get_upcoming_dividends(portfolio, days_ahead=365))
+    projections = project_dividend_income(portfolio, months=12, growth_rate=Decimal('5'))
+    quarterly_totals = {}
     
-    print(f"  Total Stocks: {total_stocks}")
-    print(f"  Total Historical Dividend Payments: {total_dividends_recorded}")
-    print(f"  Upcoming Dividend Payments (Next Year): {total_upcoming}")
-    print(f"  Portfolio Value: ${portfolio.total_portfolio_value:,.2f}")
-    print(f"  Lifetime Dividend Income: ${lifetime_income:,.2f}")
-    print(f"  Portfolio Yield: {portfolio_yield:.2f}%")
+    for proj_date, proj_income in projections:
+        quarter = (proj_date.month - 1) // 3 + 1
+        year = proj_date.year
+        key = f"Q{quarter} {year}"
+        quarterly_totals[key] = quarterly_totals.get(key, Decimal('0')) + proj_income
     
-    # Calculate return on investment from dividends
-    total_cost = sum(stock.total_cost for stock in portfolio.stocks)
-    if total_cost > 0:
-        dividend_roi = (lifetime_income / total_cost) * Decimal('100')
-        print(f"  Dividend ROI: {dividend_roi:.2f}%")
+    print("\nProjected Quarterly Dividend Income (assuming 5% annual growth):")
+    for quarter, total in quarterly_totals.items():
+        print(f"  {quarter}: {format_inr(total)}")
     
-    print("\n" + "="*70 + "\n")
-    print("\nExample usage complete!")
-    print("\nTo extend this app, you can:")
-    print("  - Add more stocks to your portfolio")
-    print("  - Update stock prices regularly")
-    print("  - Record new dividend payments")
-    print("  - Generate reports and visualizations")
-    print("  - Export data to CSV or JSON formats")
-    print("  - Add tax tracking features")
-    print("  - Implement automatic data fetching from APIs")
-    print("\n" + "="*70 + "\n")
-
+    total_projected = sum(proj_income for _, proj_income in projections)
+    print(f"\nTotal Projected (12 months): {format_inr(total_projected)}")
+    
+    # Generate comprehensive summary
+    print_separator()
+    print("COMPREHENSIVE DIVIDEND SUMMARY")
+    print_separator()
+    
+    summary = generate_dividend_summary(portfolio)
+    
+    print(f"\nTotal Portfolio Value: {summary['total_portfolio_value_formatted']}")
+    print(f"Expected Annual Dividend Income: {summary['annual_dividend_income_formatted']}")
+    print(f"Year-to-Date Dividend Income: {summary['ytd_dividend_income_formatted']}")
+    print(f"Portfolio Dividend Yield: {summary['portfolio_yield']:.2f}%")
+    print(f"Number of Stocks: {summary['number_of_stocks']}")
+    print(f"Total Dividends Received: {summary['total_dividends_received']}")
+    print(f"Currency: {summary['currency']}")
+    
+    # Calculate dividend growth rates
+    print_separator()
+    print("DIVIDEND GROWTH ANALYSIS")
+    print_separator()
+    
+    for ticker in portfolio.schedules.keys():
+        stock = portfolio.get_stock(ticker)
+        if stock:
+            growth_rate = calculate_dividend_growth_rate(portfolio, ticker)
+            if growth_rate is not None:
+                print(f"\n{stock.name} ({ticker}):")
+                print(f"  Average Dividend Growth Rate: {growth_rate:.2f}%")
+            else:
+                print(f"\n{stock.name} ({ticker}):")
+                print(f"  Insufficient data for growth rate calculation")
+    
+    print_separator()
+    print("\nExample usage completed successfully!")
+    print("All calculations are in Indian Rupees (INR)")
+    print_separator()
 
 if __name__ == "__main__":
     main()
