@@ -1,212 +1,185 @@
 """Sample data for demonstrating the Dividend Tracker App
-
 This module provides example data to help users understand
 how to use the dividend tracking system.
 """
-
 from datetime import date, timedelta
 from decimal import Decimal
 from models import Stock, Dividend, DividendSchedule, Portfolio
 
-
 def create_sample_portfolio() -> Portfolio:
-    """Create a sample portfolio with example stocks and dividend data.
+    """Create a sample portfolio with example Indian stocks and dividend data.
     
     Returns:
-        Portfolio object populated with sample data
+        Portfolio object populated with sample data from Indian Stock Market (NSE)
     """
-    portfolio = Portfolio(name="Sample Dividend Portfolio")
+    portfolio = Portfolio(name="Sample Indian Dividend Portfolio")
     
-    # Sample Stock 1: Apple (AAPL)
-    aapl = Stock(
-        ticker="AAPL",
-        name="Apple Inc.",
-        shares=Decimal('100'),
-        purchase_price=Decimal('150.00'),
-        current_price=Decimal('175.00'),
-        currency="USD"
-    )
-    portfolio.add_stock(aapl)
-    
-    # Sample Stock 2: Microsoft (MSFT)
-    msft = Stock(
-        ticker="MSFT",
-        name="Microsoft Corporation",
+    # Sample Stock 1: Reliance Industries (RELIANCE)
+    reliance = Stock(
+        ticker="RELIANCE",
+        name="Reliance Industries Limited",
         shares=Decimal('50'),
-        purchase_price=Decimal('300.00'),
-        current_price=Decimal('350.00'),
-        currency="USD"
+        purchase_price=Decimal('2400.00'),
+        current_price=Decimal('2650.00'),
+        currency="INR"
     )
-    portfolio.add_stock(msft)
+    portfolio.add_stock(reliance)
     
-    # Sample Stock 3: Coca-Cola (KO)
-    ko = Stock(
-        ticker="KO",
-        name="The Coca-Cola Company",
-        shares=Decimal('200'),
-        purchase_price=Decimal('55.00'),
-        current_price=Decimal('60.00'),
-        currency="USD"
+    # Sample Stock 2: Tata Consultancy Services (TCS)
+    tcs = Stock(
+        ticker="TCS",
+        name="Tata Consultancy Services Limited",
+        shares=Decimal('30'),
+        purchase_price=Decimal('3200.00'),
+        current_price=Decimal('3750.00'),
+        currency="INR"
     )
-    portfolio.add_stock(ko)
+    portfolio.add_stock(tcs)
     
-    # Sample Stock 4: Johnson & Johnson (JNJ)
-    jnj = Stock(
-        ticker="JNJ",
-        name="Johnson & Johnson",
-        shares=Decimal('75'),
-        purchase_price=Decimal('160.00'),
-        current_price=Decimal('165.00'),
-        currency="USD"
+    # Sample Stock 3: HDFC Bank (HDFCBANK)
+    hdfcbank = Stock(
+        ticker="HDFCBANK",
+        name="HDFC Bank Limited",
+        shares=Decimal('40'),
+        purchase_price=Decimal('1550.00'),
+        current_price=Decimal('1680.00'),
+        currency="INR"
     )
-    portfolio.add_stock(jnj)
+    portfolio.add_stock(hdfcbank)
     
-    # Add dividend schedules
-    aapl_schedule = DividendSchedule(
-        ticker="AAPL",
+    # Sample Stock 4: Infosys (INFY)
+    infy = Stock(
+        ticker="INFY",
+        name="Infosys Limited",
+        shares=Decimal('60'),
+        purchase_price=Decimal('1420.00'),
+        current_price=Decimal('1580.00'),
+        currency="INR"
+    )
+    portfolio.add_stock(infy)
+    
+    # Add dividend schedules for each stock
+    # Reliance typically pays semi-annual dividends
+    reliance_schedule = DividendSchedule(
+        ticker="RELIANCE",
+        frequency="semi-annual",
+        typical_amount=Decimal('8.00'),  # ₹8 per share per payment
+        last_ex_dividend_date=date(2024, 9, 12),
+        next_payment_date=date(2025, 3, 15)
+    )
+    portfolio.add_schedule(reliance_schedule)
+    
+    # TCS typically pays quarterly dividends
+    tcs_schedule = DividendSchedule(
+        ticker="TCS",
         frequency="quarterly",
-        typical_amount=Decimal('0.24'),
-        last_ex_dividend_date=date(2025, 8, 12),
-        next_payment_date=date(2025, 11, 14)
+        typical_amount=Decimal('27.00'),  # ₹27 per share per quarter
+        last_ex_dividend_date=date(2024, 10, 10),
+        next_payment_date=date(2025, 1, 15)
     )
-    portfolio.add_schedule(aapl_schedule)
+    portfolio.add_schedule(tcs_schedule)
     
-    msft_schedule = DividendSchedule(
-        ticker="MSFT",
+    # HDFC Bank typically pays quarterly dividends
+    hdfcbank_schedule = DividendSchedule(
+        ticker="HDFCBANK",
         frequency="quarterly",
-        typical_amount=Decimal('0.75'),
-        last_ex_dividend_date=date(2025, 8, 15),
-        next_payment_date=date(2025, 11, 7)
+        typical_amount=Decimal('19.50'),  # ₹19.50 per share per quarter
+        last_ex_dividend_date=date(2024, 9, 18),
+        next_payment_date=date(2025, 1, 10)
     )
-    portfolio.add_schedule(msft_schedule)
+    portfolio.add_schedule(hdfcbank_schedule)
     
-    ko_schedule = DividendSchedule(
-        ticker="KO",
+    # Infosys typically pays quarterly dividends
+    infy_schedule = DividendSchedule(
+        ticker="INFY",
         frequency="quarterly",
-        typical_amount=Decimal('0.46'),
-        last_ex_dividend_date=date(2025, 9, 15),
-        next_payment_date=date(2025, 12, 15)
+        typical_amount=Decimal('20.00'),  # ₹20 per share per quarter
+        last_ex_dividend_date=date(2024, 10, 15),
+        next_payment_date=date(2025, 1, 20)
     )
-    portfolio.add_schedule(ko_schedule)
+    portfolio.add_schedule(infy_schedule)
     
-    jnj_schedule = DividendSchedule(
-        ticker="JNJ",
-        frequency="quarterly",
-        typical_amount=Decimal('1.13'),
-        last_ex_dividend_date=date(2025, 8, 26),
-        next_payment_date=date(2025, 12, 10)
-    )
-    portfolio.add_schedule(jnj_schedule)
-    
-    # Add historical dividends (past year)
+    # Add historical dividend payments
     today = date.today()
     
-    # AAPL historical dividends
-    for i in range(4):
-        payment_date = date(2024, 11, 14) + timedelta(days=i*91)
-        if payment_date < today:
-            div = Dividend(
-                ticker="AAPL",
-                payment_date=payment_date,
-                amount_per_share=Decimal('0.24'),
-                shares_owned=Decimal('100'),
-                payment_status="paid"
-            )
-            portfolio.add_dividend(div)
+    # Reliance historical dividends (past year, semi-annual)
+    portfolio.add_dividend(Dividend(
+        ticker="RELIANCE",
+        payment_date=today - timedelta(days=90),
+        amount_per_share=Decimal('8.00'),
+        shares=Decimal('50')
+    ))
+    portfolio.add_dividend(Dividend(
+        ticker="RELIANCE",
+        payment_date=today - timedelta(days=270),
+        amount_per_share=Decimal('7.50'),
+        shares=Decimal('50')
+    ))
     
-    # MSFT historical dividends
-    for i in range(4):
-        payment_date = date(2024, 11, 7) + timedelta(days=i*91)
-        if payment_date < today:
-            div = Dividend(
-                ticker="MSFT",
-                payment_date=payment_date,
-                amount_per_share=Decimal('0.75'),
-                shares_owned=Decimal('50'),
-                payment_status="paid"
-            )
-            portfolio.add_dividend(div)
+    # TCS historical dividends (past year, quarterly)
+    for i, days_ago in enumerate([30, 120, 210, 300]):
+        portfolio.add_dividend(Dividend(
+            ticker="TCS",
+            payment_date=today - timedelta(days=days_ago),
+            amount_per_share=Decimal('27.00'),
+            shares=Decimal('30')
+        ))
     
-    # KO historical dividends
-    for i in range(4):
-        payment_date = date(2024, 12, 15) + timedelta(days=i*91)
-        if payment_date < today:
-            div = Dividend(
-                ticker="KO",
-                payment_date=payment_date,
-                amount_per_share=Decimal('0.46'),
-                shares_owned=Decimal('200'),
-                payment_status="paid"
-            )
-            portfolio.add_dividend(div)
+    # HDFC Bank historical dividends (past year, quarterly)
+    for i, days_ago in enumerate([45, 135, 225, 315]):
+        portfolio.add_dividend(Dividend(
+            ticker="HDFCBANK",
+            payment_date=today - timedelta(days=days_ago),
+            amount_per_share=Decimal('19.50'),
+            shares=Decimal('40')
+        ))
     
-    # JNJ historical dividends
-    for i in range(4):
-        payment_date = date(2024, 12, 10) + timedelta(days=i*91)
-        if payment_date < today:
-            div = Dividend(
-                ticker="JNJ",
-                payment_date=payment_date,
-                amount_per_share=Decimal('1.13'),
-                shares_owned=Decimal('75'),
-                payment_status="paid"
-            )
-            portfolio.add_dividend(div)
-    
-    # Add upcoming dividends
-    upcoming_aapl = Dividend(
-        ticker="AAPL",
-        payment_date=date(2025, 11, 14),
-        amount_per_share=Decimal('0.24'),
-        shares_owned=Decimal('100'),
-        payment_status="pending"
-    )
-    portfolio.add_dividend(upcoming_aapl)
-    
-    upcoming_msft = Dividend(
-        ticker="MSFT",
-        payment_date=date(2025, 11, 7),
-        amount_per_share=Decimal('0.75'),
-        shares_owned=Decimal('50'),
-        payment_status="pending"
-    )
-    portfolio.add_dividend(upcoming_msft)
-    
-    upcoming_ko = Dividend(
-        ticker="KO",
-        payment_date=date(2025, 12, 15),
-        amount_per_share=Decimal('0.46'),
-        shares_owned=Decimal('200'),
-        payment_status="pending"
-    )
-    portfolio.add_dividend(upcoming_ko)
-    
-    upcoming_jnj = Dividend(
-        ticker="JNJ",
-        payment_date=date(2025, 12, 10),
-        amount_per_share=Decimal('1.13'),
-        shares_owned=Decimal('75'),
-        payment_status="pending"
-    )
-    portfolio.add_dividend(upcoming_jnj)
+    # Infosys historical dividends (past year, quarterly)
+    for i, days_ago in enumerate([25, 115, 205, 295]):
+        portfolio.add_dividend(Dividend(
+            ticker="INFY",
+            payment_date=today - timedelta(days=days_ago),
+            amount_per_share=Decimal('20.00'),
+            shares=Decimal('60')
+        ))
     
     return portfolio
 
-
-if __name__ == "__main__":
-    # Example usage
-    portfolio = create_sample_portfolio()
+def create_minimal_portfolio() -> Portfolio:
+    """Create a minimal portfolio for basic testing.
     
-    print(f"\n{'='*60}")
-    print(f"Portfolio: {portfolio.name}")
-    print(f"{'='*60}\n")
+    Returns:
+        Portfolio object with minimal sample data
+    """
+    portfolio = Portfolio(name="Minimal Indian Portfolio")
     
-    print("Stocks in Portfolio:")
-    print("-" * 60)
-    for stock in portfolio.stocks:
-        print(f"{stock.ticker:6} {stock.name:30} {stock.shares:>6} shares")
-        print(f"       Purchase: ${stock.purchase_price:>8.2f}  Current: ${stock.current_price:>8.2f}")
-        print(f"       Total Value: ${stock.total_value:>10.2f}  Gain/Loss: ${stock.unrealized_gain:>10.2f}\n")
+    # Single stock: TCS
+    tcs = Stock(
+        ticker="TCS",
+        name="Tata Consultancy Services Limited",
+        shares=Decimal('10'),
+        purchase_price=Decimal('3500.00'),
+        current_price=Decimal('3750.00'),
+        currency="INR"
+    )
+    portfolio.add_stock(tcs)
     
-    print(f"\nTotal Portfolio Value: ${portfolio.total_portfolio_value:,.2f}")
-    print(f"\n{'='*60}\n")
+    # Single dividend schedule
+    tcs_schedule = DividendSchedule(
+        ticker="TCS",
+        frequency="quarterly",
+        typical_amount=Decimal('27.00'),
+        last_ex_dividend_date=date(2024, 10, 10),
+        next_payment_date=date(2025, 1, 15)
+    )
+    portfolio.add_schedule(tcs_schedule)
+    
+    # Single dividend payment
+    portfolio.add_dividend(Dividend(
+        ticker="TCS",
+        payment_date=date.today() - timedelta(days=30),
+        amount_per_share=Decimal('27.00'),
+        shares=Decimal('10')
+    ))
+    
+    return portfolio
