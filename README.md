@@ -1,59 +1,126 @@
 # Dividend Tracker App - Indian Stock Market Edition
 
-A simple GUI to track dividend income, yield, payment dates, payout history, and future dividend estimates for Indian stocks (NSE/BSE) in INR (₹).
+A command-line Python application to track dividend income, yield, payment dates, payout history, and future dividend estimates for Indian stocks (NSE/BSE) in INR (₹).
 
-## New: Tkinter GUI
-The repository now includes a desktop GUI built with Tkinter.
-- File: gui.py
-- Currency: INR (₹)
-- OS: Windows/Linux/macOS (Python 3.8+)
+## Features
 
-### Features in GUI
-- Portfolio tab: add/update Indian stock holdings with symbol, qty, average price, FY dividend per share, frequency, and last/next dividend dates.
-- Dividends tab: record dividend events with ex-date, pay-date, and amount per share.
-- Analytics tab: buttons for Total/Annual/Monthly income, Yield on Cost per holding, upcoming/past dividends lists, and a 12-month payout projection.
-- Export: save portfolio to CSV and export analytics text to CSV/plain text.
+- Track multiple stock holdings with purchase price and quantity
+- Record dividend payments with dates and amounts
+- Calculate portfolio metrics:
+  - Total invested amount
+  - Annual dividend income
+  - Monthly average dividend income
+  - Yield on cost per holding
+- Track upcoming and past dividend payments
+- Project future dividend income based on historical data
+- Export portfolio data to CSV
 
-## Quick Start
-1) Install Python 3.8+.
-2) Clone the repo and open a terminal in the project folder.
-3) Run the GUI:
-   - Windows: py gui.py
-   - macOS/Linux: python3 gui.py
+## Installation
 
-## Data Format (Portfolio CSV)
-Columns expected when loading/saving portfolio.csv:
-- symbol, name, qty, avg_price, fy_div, freq, last_div, next_div
+1. Ensure you have Python 3.8+ installed
+2. Clone this repository:
+   ```bash
+   git clone https://github.com/vectorwizard/Dividend_Tracker_App.git
+   cd Dividend_Tracker_App
+   ```
 
-Example:
+## Usage
+
+The application provides a command-line interface through `example_usage.py`. You can also use the core modules to build your own tools:
+
+### Quick Start
+
+```bash
+python example_usage.py
 ```
+
+### Core Modules
+
+- **models.py**: Defines the `Stock` and `Dividend` data models
+- **calculator.py**: Contains calculation logic for portfolio analytics
+- **sample_data.py**: Provides sample data for testing
+- **example_usage.py**: Demonstrates how to use the modules
+
+## Data Format
+
+### Stock Holdings
+
+Each stock holding contains:
+- `symbol`: Stock ticker symbol (e.g., "RELIANCE", "TCS")
+- `name`: Full company name
+- `qty`: Number of shares owned
+- `avg_price`: Average purchase price per share (INR)
+- `fy_div`: Annual dividend per share (INR)
+- `freq`: Dividend payment frequency per year
+- `last_div`: Last dividend payment date (YYYY-MM-DD)
+- `next_div`: Next expected dividend date (YYYY-MM-DD)
+
+### Dividend Events
+
+Each dividend event contains:
+- `symbol`: Stock ticker symbol
+- `ex_date`: Ex-dividend date
+- `pay_date`: Payment date
+- `amount`: Dividend amount per share (INR)
+
+## Example
+
+```python
+from models import Stock, Dividend
+from calculator import Calculator
+
+# Create stock holdings
+stocks = [
+    Stock(
+        symbol="RELIANCE",
+        name="Reliance Industries",
+        qty=10,
+        avg_price=2550.00,
+        fy_div=40.0,
+        freq=1,
+        last_div="2025-05-01",
+        next_div="2026-05-01"
+    ),
+    Stock(
+        symbol="TCS",
+        name="Tata Consultancy Services",
+        qty=5,
+        avg_price=3900.00,
+        fy_div=90.0,
+        freq=2,
+        last_div="2025-06-10",
+        next_div="2025-12-10"
+    )
+]
+
+# Create calculator instance
+calc = Calculator(stocks)
+
+# Calculate metrics
+total_invested = calc.total_invested()
+annual_income = calc.annual_dividend_income()
+monthly_income = calc.monthly_dividend_income()
+
+print(f"Total Invested: ₹{total_invested:,.2f}")
+print(f"Annual Dividend Income: ₹{annual_income:,.2f}")
+print(f"Monthly Average: ₹{monthly_income:,.2f}")
+```
+
+## Portfolio CSV Format
+
+You can save and load portfolios using CSV format:
+
+```csv
 symbol,name,qty,avg_price,fy_div,freq,last_div,next_div
 RELIANCE,Reliance Industries,10,2550.00,40.0,1,2025-05-01,2026-05-01
 TCS,Tata Consultancy Services,5,3900.00,90.0,2,2025-06-10,2025-12-10
+HDFC,HDFC Bank,20,1600.00,16.5,1,2025-04-15,2026-04-15
 ```
 
-## Using the GUI
-- Portfolio tab:
-  - Enter details and click "Add/Update". Select a row and click "Remove Selected" to delete.
-  - Use File > Save Portfolio CSV to persist your portfolio.
-- Dividends tab:
-  - Record each dividend with ex/pay dates and amount per share.
-- Analytics tab:
-  - Calculate Income: Shows Total Invested, Annual, and Monthly dividend income in ₹.
-  - Yield & Projections: Shows YoC per stock and the next payouts projection.
-  - Upcoming Dividends: Uses recorded dividends by ex-date ≥ today.
-  - Past Dividends: Uses recorded dividends by ex-date < today and totals collected.
-  - Export Output: Save the analytics text to a file.
+## Currency
 
-## Notes and Assumptions
-- All amounts are treated as INR (₹).
-- Frequency (freq/yr) is used for next 12-month projection with the next_div date as a starting point.
-- Dates must be YYYY-MM-DD.
-- The GUI does not fetch live market data; values are user-supplied.
-
-## Troubleshooting
-- If the window is too small, resize; the tables and text area are responsive.
-- CSV load errors: check column names and numeric formats.
+All monetary values are in Indian Rupees (₹/INR).
 
 ## License
-MIT
+
+This project is open source and available for personal use.
