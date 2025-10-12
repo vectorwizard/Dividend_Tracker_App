@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dividend Tracker - Projections</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { background-color: #f8f9fa; }
+        .navbar { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 2px 4px rgba(0,0,0,.1); }
+        .page-title { color: #2d3748; font-weight: 700; margin-bottom: 30px; }
+        .projection-card { background: white; border-radius: 15px; padding: 30px; margin-bottom: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+        .stat-card { text-align: center; padding: 25px; background: linear-gradient(135deg, #4db6ac 0%, #009688 100%); color: white; border-radius: 15px; }
+        .stat-value { font-size: 2rem; font-weight: bold; }
+        .stat-label { font-size: 0.9rem; opacity: 0.9; }
+        .table-responsive { border-radius: 10px; overflow: hidden; }
+        .badge-custom { padding: 8px 12px; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-chart-line me-2"></i>Dividend Tracker
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/"><i class="fas fa-home me-1"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/portfolio"><i class="fas fa-briefcase me-1"></i>Portfolio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dividend_history"><i class="fas fa-history me-1"></i>Dividend History</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/projections"><i class="fas fa-chart-bar me-1"></i>Projections</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid py-4">
+        <h1 class="page-title"><i class="fas fa-chart-bar me-2"></i>Projections</h1>
+
+        <!-- Summary Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="stat-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <div class="stat-value">${{ projected_annual_income|default('0.00') }}</div>
+                    <div class="stat-label">Projected Annual Income</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card" style="background: linear-gradient(135deg, #81d4fa 0%, #4fc3f7 100%);">
+                    <div class="stat-value">{{ projected_yield|default('0.00') }}%</div>
+                    <div class="stat-label">Projected Yield</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card" style="background: linear-gradient(135deg, #66bb6a 0%, #43a047 100%);">
+                    <div class="stat-value">${{ five_year_income|default('0.00') }}</div>
+                    <div class="stat-label">5-Year Income Projection</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Projection Assumptions -->
+        <div class="projection-card">
+            <h3 class="mb-4"><i class="fas fa-sliders-h me-2"></i>Assumptions</h3>
+            <form class="row g-3" method="POST" action="/update_assumptions">
+                <div class="col-md-3">
+                    <label class="form-label">Annual Contribution ($)</label>
+                    <input type="number" step="0.01" class="form-control" name="annual_contribution" value="{{ assumptions.annual_contribution|default(0) }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Dividend Growth Rate (%)</label>
+                    <input type="number" step="0.01" class="form-control" name="dividend_growth_rate" value="{{ assumptions.dividend_growth_rate|default(0) }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Share Price Growth (%)</label>
+                    <input type="number" step="0.01" class="form-control" name="price_growth_rate" value="{{ assumptions.price_growth_rate|default(0) }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Reinvest Dividends</label>
+                    <select class="form-select" name="reinvest">
+                        <option value="true" {% if assumptions.reinvest %}selected{% endif %}>Yes</option>
+                        <option value="false" {% if not assumptions.reinvest %}selected{% endif %}>No</option>
+                    </select>
+                </div>
+                <div class="col-12">
+                    <button type="submit" class="btn btn-primary mt-2">Update Projections</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Yearly Projections Table -->
+        <div class="projection-card">
+            <h3 class="mb-4"><i class="fas fa-table me-2"></i>Yearly Projections</h3>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Year</th>
+                            <th>Starting Value</th>
+                            <th>Contributions</th>
+                            <th>Dividends</th>
+                            <th>Reinvested</th>
+                            <th>Ending Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if yearly_projections %}
+                            {% for row in yearly_projections %}
+                            <tr>
+                                <td>{{ row.year }}</td>
+                                <td>${{ "%.2f"|format(row.starting_value) }}</td>
+                                <td>${{ "%.2f"|format(row.contributions) }}</td>
+                                <td>${{ "%.2f"|format(row.dividends) }}</td>
+                                <td>${{ "%.2f"|format(row.reinvested) }}</td>
+                                <td class="fw-bold">${{ "%.2f"|format(row.ending_value) }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No projections available. Adjust assumptions and update.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Upcoming Dividends -->
+        <div class="projection-card">
+            <h3 class="mb-4"><i class="fas fa-calendar-check me-2"></i>Upcoming Dividends</h3>
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ex-Date</th>
+                            <th>Pay Date</th>
+                            <th>Symbol</th>
+                            <th>Shares</th>
+                            <th>Dividend per Share</th>
+                            <th>Expected Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if upcoming_dividends %}
+                            {% for d in upcoming_dividends %}
+                            <tr>
+                                <td>{{ d.ex_date }}</td>
+                                <td>{{ d.pay_date }}</td>
+                                <td><strong class="text-primary">{{ d.symbol }}</strong></td>
+                                <td>{{ d.shares }}</td>
+                                <td>${{ "%.4f"|format(d.amount_per_share) }}</td>
+                                <td class="text-success">${{ "%.2f"|format(d.expected_amount) }}</td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No upcoming dividends found.</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
