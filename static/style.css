@@ -1,0 +1,364 @@
+/* Custom Bootstrap UI Enhancements for Dividend Tracker App */
+
+/* Color Scheme */
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #27ae60;
+    --danger-color: #e74c3c;
+    --warning-color: #f39c12;
+    --light-bg: #ecf0f1;
+    --dark-text: #2c3e50;
+    --success-color: #27ae60;
+}
+
+/* Body and General Styling */
+body {
+    background-color: var(--light-bg);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: var(--dark-text);
+}
+
+/* Navbar Customization */
+.navbar {
+    background-color: var(--primary-color) !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    padding: 1rem 0;
+}
+
+.navbar-brand {
+    font-weight: 700;
+    font-size: 1.5rem;
+    color: #fff !important;
+}
+
+.navbar-nav .nav-link {
+    color: #fff !important;
+    margin: 0 0.5rem;
+    transition: color 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover {
+    color: var(--accent-color) !important;
+}
+
+/* Card Styling */
+.card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+}
+
+.card-header {
+    background-color: var(--secondary-color);
+    color: white;
+    font-weight: 600;
+    border-radius: 10px 10px 0 0 !important;
+    padding: 1rem 1.25rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Card Sizing */
+.card-sm {
+    max-width: 400px;
+}
+
+.card-md {
+    max-width: 600px;
+}
+
+.card-lg {
+    max-width: 800px;
+}
+
+.card-xl {
+    max-width: 1000px;
+}
+
+/* Table Styling */
+.table {
+    background-color: white;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.table thead {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.table thead th {
+    border: none;
+    padding: 1rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.table tbody tr {
+    border-bottom: 1px solid #dee2e6;
+    transition: background-color 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+.table tbody td {
+    padding: 1rem;
+    vertical-align: middle;
+    border-right: 1px solid #e9ecef;
+}
+
+.table tbody td:last-child {
+    border-right: none;
+}
+
+/* Table Borders */
+.table-bordered {
+    border: 2px solid var(--primary-color);
+}
+
+.table-bordered thead th {
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.table-bordered tbody td {
+    border: 1px solid #dee2e6;
+}
+
+/* Button Styling */
+.btn {
+    border-radius: 5px;
+    padding: 0.5rem 1.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background-color: var(--secondary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+}
+
+.btn-success {
+    background-color: var(--accent-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background-color: #229954;
+}
+
+.btn-danger {
+    background-color: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background-color: #c0392b;
+}
+
+.btn-warning {
+    background-color: var(--warning-color);
+    color: white;
+}
+
+.btn-warning:hover {
+    background-color: #e67e22;
+}
+
+/* Form Styling */
+.form-control {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    padding: 0.75rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-control:focus {
+    border-color: var(--secondary-color);
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
+}
+
+.form-label {
+    font-weight: 600;
+    color: var(--dark-text);
+    margin-bottom: 0.5rem;
+}
+
+/* Alert Styling */
+.alert {
+    border-radius: 8px;
+    border: none;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.alert-info {
+    background-color: #d1ecf1;
+    color: #0c5460;
+}
+
+/* Margin and Padding Adjustments */
+.mt-custom {
+    margin-top: 2rem;
+}
+
+.mb-custom {
+    margin-bottom: 2rem;
+}
+
+.pt-custom {
+    padding-top: 2rem;
+}
+
+.pb-custom {
+    padding-bottom: 2rem;
+}
+
+.px-custom {
+    padding-left: 2rem;
+    padding-right: 2rem;
+}
+
+.py-custom {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+/* Container Spacing */
+.container {
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+/* Dashboard Stats Cards */
+.stats-card {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--accent-color) 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 10px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.stats-card h3 {
+    font-size: 2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card p {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-bottom: 0;
+}
+
+/* Action Buttons in Tables */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.action-buttons .btn {
+    padding: 0.25rem 0.75rem;
+    font-size: 0.875rem;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+}
+
+/* Footer Styling */
+footer {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 2rem 0;
+    margin-top: 3rem;
+    text-align: center;
+}
+
+/* Loading Spinner */
+.spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid var(--secondary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-color);
+}
