@@ -1,0 +1,11 @@
+# Python Web Framework
+Flask==3.0.0
+
+# UI Framework
+bootstrap-flask==2.3.3
+
+# Note: The following are Python standard libraries and do not need to be installed:
+# - datetime
+# - decimal
+# - dataclasses
+# - typing
