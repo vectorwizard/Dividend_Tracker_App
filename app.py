@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 import os
 
 # Import existing modules
-from models import Stock, Portfolio, DividendHistory
+from models import Stock, Portfolio, Dividend, DividendSchedule
 from calculator import DividendCalculator
 from sample_data import generate_sample_data
 
