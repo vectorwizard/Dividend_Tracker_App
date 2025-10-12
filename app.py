@@ -34,240 +34,228 @@ def index():
                     'date': div.payment_date,
                     'amount': div.amount * stock.shares
                 })
+    
+    # Sort by date descending
     recent_dividends.sort(key=lambda x: x['date'], reverse=True)
     
-    # Get upcoming dividends (next 30 days)
-    thirty_days_ahead = datetime.now() + timedelta(days=30)
-    upcoming_dividends = []
+    # Get upcoming dividends (next 90 days)
+    ninety_days_ahead = datetime.now() + timedelta(days=90)
+    upcoming = []
     
     for stock in portfolio.stocks:
         if stock.dividend_schedule:
-            next_payment = stock.dividend_schedule.next_payment_date
-            if next_payment and next_payment <= thirty_days_ahead:
-                upcoming_dividends.append({
+            next_date = stock.dividend_schedule.get_next_ex_dividend_date()
+            if next_date and next_date <= ninety_days_ahead:
+                upcoming.append({
                     'symbol': stock.symbol,
-                    'date': next_payment,
-                    'amount': stock.dividend_amount * stock.shares
+                    'ex_date': next_date,
+                    'estimated_amount': stock.dividend_schedule.amount * stock.shares
                 })
-    upcoming_dividends.sort(key=lambda x: x['date'])
+    
+    upcoming.sort(key=lambda x: x['ex_date'])
     
     return render_template('index.html',
                          total_value=total_value,
                          total_annual_dividends=total_annual_dividends,
                          portfolio_yield=portfolio_yield,
+                         stocks_count=len(portfolio.stocks),
                          recent_dividends=recent_dividends[:5],
-                         upcoming_dividends=upcoming_dividends[:5],
-                         stock_count=len(portfolio.stocks))
+                         upcoming_dividends=upcoming[:5])
 
 @app.route('/portfolio')
-def portfolio_view():
-    """Detailed portfolio view showing all stocks"""
+def show_portfolio():
+    """Display portfolio holdings"""
     stocks_data = []
     
     for stock in portfolio.stocks:
-        annual_dividend = stock.calculate_annual_dividend()
-        total_value = stock.shares * stock.current_price
-        yield_pct = (annual_dividend / total_value * 100) if total_value > 0 else 0
+        annual_dividend = calculate_annual_dividend_income(Portfolio([stock]))
+        stock_value = stock.shares * stock.price
+        stock_yield = (annual_dividend / stock_value * 100) if stock_value > 0 else 0
         
         stocks_data.append({
             'symbol': stock.symbol,
             'name': stock.name,
             'shares': stock.shares,
-            'current_price': stock.current_price,
-            'total_value': total_value,
+            'price': stock.price,
+            'value': stock_value,
             'annual_dividend': annual_dividend,
-            'yield': yield_pct,
-            'dividend_frequency': stock.dividend_frequency
+            'yield': stock_yield
         })
-    
-    # Sort by total value descending
-    stocks_data.sort(key=lambda x: x['total_value'], reverse=True)
     
     return render_template('portfolio.html',
                          stocks=stocks_data,
-                         total_value=portfolio.total_portfolio_value,
-                         total_annual_dividends=calculate_annual_dividend_income(portfolio))
+                         total_value=portfolio.total_portfolio_value)
 
 @app.route('/dividends')
-def dividends_view():
-    """Dividend tracking and projections view"""
-    
-    # Get dividend summary
-    summary = generate_dividend_summary(portfolio)
+def show_dividends():
+    """Display dividend analysis and projections"""
     
     # Calculate projections using project_dividend_income
     monthly_projection = project_dividend_income(portfolio, months=1, growth_rate=0.0)
     quarterly_projection = project_dividend_income(portfolio, months=3, growth_rate=0.0)
     annual_projection = calculate_annual_dividend_income(portfolio)
     
-    # Get upcoming dividends (next 90 days)
-    ninety_days_ahead = datetime.now() + timedelta(days=90)
+    # Generate summary statistics
+    total_annual_dividends = calculate_annual_dividend_income(portfolio)
+    average_yield = calculate_portfolio_dividend_yield(portfolio)
+    monthly_average = total_annual_dividends / 12
+    total_stocks = len(portfolio.stocks)
+    
+    # Calculate monthly projections (array of 12 months)
+    monthly_projections = []
+    for month in range(1, 13):
+        month_name = datetime(2024, month, 1).strftime('%B')
+        month_amount = project_dividend_income(portfolio, months=1, growth_rate=0.0)
+        monthly_projections.append({'month': month_name, 'amount': month_amount})
+    
+    # Calculate quarterly projections (array of 4 quarters)
+    quarterly_projections = []
+    for quarter in range(1, 5):
+        quarter_name = f'Q{quarter}'
+        quarter_amount = project_dividend_income(portfolio, months=3, growth_rate=0.0)
+        quarterly_projections.append({'quarter': quarter_name, 'amount': quarter_amount})
+    
+    # Get upcoming dividends
     upcoming_dividends = []
+    ninety_days_ahead = datetime.now() + timedelta(days=90)
     
     for stock in portfolio.stocks:
         if stock.dividend_schedule:
-            next_payment = stock.dividend_schedule.next_payment_date
-            if next_payment and next_payment <= ninety_days_ahead:
+            next_date = stock.dividend_schedule.get_next_ex_dividend_date()
+            if next_date and next_date <= ninety_days_ahead:
                 upcoming_dividends.append({
                     'symbol': stock.symbol,
-                    'name': stock.name,
-                    'date': next_payment,
-                    'amount': stock.dividend_amount * stock.shares,
-                    'frequency': stock.dividend_frequency
+                    'ex_date': next_date,
+                    'estimated_amount': stock.dividend_schedule.amount * stock.shares
                 })
-    upcoming_dividends.sort(key=lambda x: x['date'])
+    
+    upcoming_dividends.sort(key=lambda x: x['ex_date'])
     
     return render_template('dividends.html',
-                         summary=summary,
-                         monthly_projection=monthly_projection,
-                         quarterly_projection=quarterly_projection,
+                         total_annual_dividends=total_annual_dividends,
+                         average_yield=average_yield,
+                         monthly_average=monthly_average,
+                         total_stocks=total_stocks,
+                         monthly_projections=monthly_projections,
+                         quarterly_projections=quarterly_projections,
                          annual_projection=annual_projection,
                          upcoming_dividends=upcoming_dividends)
 
-@app.route('/stock/<symbol>')
-def stock_detail(symbol):
-    """Detailed view of a single stock"""
-    stock = portfolio.get_stock(symbol)
-    
-    if not stock:
-        flash(f'Stock {symbol} not found', 'error')
-        return redirect(url_for('portfolio_view'))
-    
-    # Calculate metrics
-    annual_dividend = stock.calculate_annual_dividend()
-    total_value = stock.shares * stock.current_price
-    yield_pct = (annual_dividend / total_value * 100) if total_value > 0 else 0
-    
-    # Get dividend history
-    history = [{
-        'date': div.payment_date,
-        'amount': div.amount,
-        'total': div.amount * stock.shares
-    } for div in stock.dividend_history]
-    history.sort(key=lambda x: x['date'], reverse=True)
-    
-    return render_template('stock_detail.html',
-                         stock=stock,
-                         annual_dividend=annual_dividend,
-                         total_value=total_value,
-                         yield_pct=yield_pct,
-                         history=history)
-
-@app.route('/stock/add', methods=['GET', 'POST'])
+@app.route('/add-stock', methods=['GET', 'POST'])
 def add_stock():
-    """Add a new stock to the portfolio"""
+    """Add a new stock to portfolio"""
     if request.method == 'POST':
         try:
-            symbol = request.form.get('symbol').upper()
-            name = request.form.get('name')
-            shares = float(request.form.get('shares'))
-            current_price = float(request.form.get('current_price'))
-            dividend_amount = float(request.form.get('dividend_amount', 0))
-            dividend_frequency = request.form.get('dividend_frequency', 'quarterly')
+            # Get form data
+            symbol = request.form.get('symbol', '').upper()
+            name = request.form.get('name', '')
+            shares = int(request.form.get('shares', 0))
+            price = float(request.form.get('price', 0.0))
             
             # Create new stock
-            stock = Stock(
+            new_stock = Stock(
                 symbol=symbol,
                 name=name,
                 shares=shares,
-                current_price=current_price,
-                dividend_amount=dividend_amount,
-                dividend_frequency=dividend_frequency
+                price=price
             )
             
-            portfolio.add_stock(stock)
-            flash(f'Successfully added {symbol} to portfolio', 'success')
-            return redirect(url_for('portfolio_view'))
+            # Add dividend schedule if provided
+            if request.form.get('dividend_amount'):
+                amount = float(request.form.get('dividend_amount', 0.0))
+                frequency = request.form.get('frequency', 'quarterly')
+                next_date_str = request.form.get('next_date')
+                
+                if next_date_str:
+                    next_date = datetime.strptime(next_date_str, '%Y-%m-%d')
+                    schedule = DividendSchedule(
+                        amount=amount,
+                        frequency=frequency,
+                        next_ex_dividend_date=next_date
+                    )
+                    new_stock.dividend_schedule = schedule
             
-        except Exception as e:
+            # Add to portfolio
+            portfolio.add_stock(new_stock)
+            flash(f'Successfully added {symbol} to portfolio!', 'success')
+            return redirect(url_for('show_portfolio'))
+            
+        except ValueError as e:
             flash(f'Error adding stock: {str(e)}', 'error')
+            return redirect(url_for('add_stock'))
     
     return render_template('add_stock.html')
 
-@app.route('/stock/<symbol>/edit', methods=['GET', 'POST'])
+@app.route('/edit-stock/<symbol>', methods=['GET', 'POST'])
 def edit_stock(symbol):
-    """Edit an existing stock in the portfolio"""
-    stock = portfolio.get_stock(symbol)
+    """Edit an existing stock"""
+    stock = None
+    for s in portfolio.stocks:
+        if s.symbol == symbol:
+            stock = s
+            break
     
     if not stock:
         flash(f'Stock {symbol} not found', 'error')
-        return redirect(url_for('portfolio_view'))
+        return redirect(url_for('show_portfolio'))
     
     if request.method == 'POST':
         try:
-            stock.name = request.form.get('name')
-            stock.shares = float(request.form.get('shares'))
-            stock.current_price = float(request.form.get('current_price'))
-            stock.dividend_amount = float(request.form.get('dividend_amount', 0))
-            stock.dividend_frequency = request.form.get('dividend_frequency', 'quarterly')
+            # Update stock data
+            stock.name = request.form.get('name', stock.name)
+            stock.shares = int(request.form.get('shares', stock.shares))
+            stock.price = float(request.form.get('price', stock.price))
             
-            flash(f'Successfully updated {symbol}', 'success')
-            return redirect(url_for('stock_detail', symbol=symbol))
+            # Update dividend schedule if provided
+            if request.form.get('dividend_amount'):
+                amount = float(request.form.get('dividend_amount', 0.0))
+                frequency = request.form.get('frequency', 'quarterly')
+                next_date_str = request.form.get('next_date')
+                
+                if next_date_str:
+                    next_date = datetime.strptime(next_date_str, '%Y-%m-%d')
+                    if stock.dividend_schedule:
+                        stock.dividend_schedule.amount = amount
+                        stock.dividend_schedule.frequency = frequency
+                        stock.dividend_schedule.next_ex_dividend_date = next_date
+                    else:
+                        schedule = DividendSchedule(
+                            amount=amount,
+                            frequency=frequency,
+                            next_ex_dividend_date=next_date
+                        )
+                        stock.dividend_schedule = schedule
             
-        except Exception as e:
+            flash(f'Successfully updated {symbol}!', 'success')
+            return redirect(url_for('show_portfolio'))
+            
+        except ValueError as e:
             flash(f'Error updating stock: {str(e)}', 'error')
     
     return render_template('edit_stock.html', stock=stock)
 
-@app.route('/stock/<symbol>/delete', methods=['POST'])
+@app.route('/delete-stock/<symbol>', methods=['POST'])
 def delete_stock(symbol):
-    """Delete a stock from the portfolio"""
-    try:
-        portfolio.remove_stock(symbol)
+    """Delete a stock from portfolio"""
+    stock = None
+    for s in portfolio.stocks:
+        if s.symbol == symbol:
+            stock = s
+            break
+    
+    if stock:
+        portfolio.remove_stock(stock)
         flash(f'Successfully removed {symbol} from portfolio', 'success')
-    except Exception as e:
-        flash(f'Error removing stock: {str(e)}', 'error')
+    else:
+        flash(f'Stock {symbol} not found', 'error')
     
-    return redirect(url_for('portfolio_view'))
+    return redirect(url_for('show_portfolio'))
 
-@app.route('/api/portfolio/summary')
-def api_portfolio_summary():
-    """API endpoint for portfolio summary data"""
-    return jsonify({
-        'total_value': portfolio.total_portfolio_value,
-        'total_annual_dividends': calculate_annual_dividend_income(portfolio),
-        'stock_count': len(portfolio.stocks),
-        'average_yield': calculate_portfolio_dividend_yield(portfolio)
-    })
-
-@app.route('/api/dividends/upcoming')
-def api_upcoming_dividends():
-    """API endpoint for upcoming dividends"""
-    days = request.args.get('days', default=30, type=int)
-    target_date = datetime.now() + timedelta(days=days)
-    upcoming = []
-    
-    for stock in portfolio.stocks:
-        if stock.dividend_schedule:
-            next_payment = stock.dividend_schedule.next_payment_date
-            if next_payment and next_payment <= target_date:
-                upcoming.append({
-                    'symbol': stock.symbol,
-                    'name': stock.name,
-                    'date': next_payment.isoformat(),
-                    'amount': stock.dividend_amount * stock.shares
-                })
-    
-    return jsonify(upcoming)
-
-@app.route('/api/stock/<symbol>')
-def api_stock_detail(symbol):
-    """API endpoint for individual stock details"""
-    stock = portfolio.get_stock(symbol)
-    
-    if not stock:
-        return jsonify({'error': 'Stock not found'}), 404
-    
-    return jsonify({
-        'symbol': stock.symbol,
-        'name': stock.name,
-        'shares': stock.shares,
-        'current_price': stock.current_price,
-        'dividend_amount': stock.dividend_amount,
-        'dividend_frequency': stock.dividend_frequency,
-        'annual_dividend': stock.calculate_annual_dividend(),
-        'total_value': stock.shares * stock.current_price
-    })
+@app.route('/api/dividend-summary')
+def api_dividend_summary():
+    """API endpoint for dividend summary"""
+    summary = generate_dividend_summary(portfolio)
+    return jsonify(summary)
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True)
