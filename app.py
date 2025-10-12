@@ -4,7 +4,7 @@ import os
 
 # Import existing modules
 from models import Stock, Portfolio, Dividend, DividendSchedule
-from calculator import calculate_annual_dividend_income, project_dividend_income, generate_dividend_summary, format_inr
+from calculator import calculate_annual_dividend_income, project_dividend_income, generate_dividend_summary, format_inr, calculate_portfolio_dividend_yield
 from sample_data import create_sample_portfolio
 
 app = Flask(__name__)
@@ -19,7 +19,7 @@ def index():
     
     # Calculate key metrics
     total_value = portfolio.total_portfolio_value
-    total_annual_dividends = portfolio.get_total_annual_dividends()
+    total_annual_dividends = calculate_annual_dividend_income(portfolio)
     portfolio_yield = (total_annual_dividends / total_value * 100) if total_value > 0 else 0
     
     # Get recent dividend payments (last 30 days)
@@ -86,7 +86,7 @@ def portfolio_view():
     return render_template('portfolio.html',
                          stocks=stocks_data,
                          total_value=portfolio.total_portfolio_value,
-                         total_annual_dividends=portfolio.get_total_annual_dividends())
+                         total_annual_dividends=calculate_annual_dividend_income(portfolio))
 
 @app.route('/dividends')
 def dividends_view():
@@ -225,9 +225,9 @@ def api_portfolio_summary():
     """API endpoint for portfolio summary data"""
     return jsonify({
         'total_value': portfolio.total_portfolio_value,
-        'total_annual_dividends': portfolio.get_total_annual_dividends(),
+        'total_annual_dividends': calculate_annual_dividend_income(portfolio),
         'stock_count': len(portfolio.stocks),
-        'average_yield': portfolio.get_average_yield()
+        'average_yield': calculate_portfolio_dividend_yield(portfolio)
     })
 
 @app.route('/api/dividends/upcoming')
