@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dividend Analytics - Dividend Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            border-radius: 15px 15px 0 0 !important;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-weight: bold;
+        }
+        .table-responsive {
+            border-radius: 10px;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="text-center mb-4">
+            <h1 class="text-white">💰 Dividend Analytics & Projections</h1>
+            <p class="text-white">Track and forecast your dividend income</p>
+        </div>
+
+        <!-- Navigation -->
+        <div class="mb-3 text-center">
+            <a href="/" class="btn btn-light mx-1">Dashboard</a>
+            <a href="/portfolio" class="btn btn-light mx-1">Portfolio</a>
+            <a href="/dividends" class="btn btn-primary mx-1">Dividends</a>
+            <a href="/projections" class="btn btn-light mx-1">Projections</a>
+            <a href="/dividend_history" class="btn btn-light mx-1">History</a>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">📊 Dividend Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-3">
+                        <h5 class="text-muted">Total Annual Dividends</h5>
+                        <h3 class="text-success">${{ total_annual_dividends|default('0.00') }}</h3>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-muted">Average Yield</h5>
+                        <h3 class="text-info">{{ average_yield|default('0.00') }}%</h3>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-muted">Monthly Average</h5>
+                        <h3 class="text-primary">${{ monthly_average|default('0.00') }}</h3>
+                    </div>
+                    <div class="col-md-3">
+                        <h5 class="text-muted">Total Stocks</h5>
+                        <h3 class="text-warning">{{ total_stocks|default('0') }}</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Monthly Projections -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">📅 Monthly Dividend Projections</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Month</th>
+                                <th>Projected Dividends</th>
+                                <th>Number of Payments</th>
+                                <th>Growth vs Last Year</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if monthly_projections %}
+                                {% for projection in monthly_projections %}
+                                <tr>
+                                    <td>{{ projection.month }}</td>
+                                    <td class="text-success">${{ projection.amount }}</td>
+                                    <td>{{ projection.count }}</td>
+                                    <td class="text-info">{{ projection.growth }}%</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No monthly projections available</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quarterly Projections -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">📈 Quarterly Dividend Projections</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Quarter</th>
+                                <th>Projected Dividends</th>
+                                <th>Number of Payments</th>
+                                <th>Growth vs Last Year</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if quarterly_projections %}
+                                {% for projection in quarterly_projections %}
+                                <tr>
+                                    <td>{{ projection.quarter }}</td>
+                                    <td class="text-success">${{ projection.amount }}</td>
+                                    <td>{{ projection.count }}</td>
+                                    <td class="text-info">{{ projection.growth }}%</td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No quarterly projections available</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Annual Projection -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">🎯 Annual Dividend Projection</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Year</th>
+                                <th>Projected Total</th>
+                                <th>Expected Payments</th>
+                                <th>Growth Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if annual_projection %}
+                                <tr>
+                                    <td>{{ annual_projection.year }}</td>
+                                    <td class="text-success">${{ annual_projection.amount }}</td>
+                                    <td>{{ annual_projection.count }}</td>
+                                    <td class="text-info">{{ annual_projection.growth }}%</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">No annual projection available</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Dividends -->
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">🔔 Upcoming Dividend Payments</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Stock Symbol</th>
+                                <th>Company Name</th>
+                                <th>Payment Date</th>
+                                <th>Dividend Amount</th>
+                                <th>Shares Owned</th>
+                                <th>Total Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if upcoming_dividends %}
+                                {% for dividend in upcoming_dividends %}
+                                <tr>
+                                    <td><strong>{{ dividend.symbol }}</strong></td>
+                                    <td>{{ dividend.company_name }}</td>
+                                    <td>{{ dividend.payment_date }}</td>
+                                    <td class="text-success">${{ dividend.dividend_amount }}</td>
+                                    <td>{{ dividend.shares }}</td>
+                                    <td class="text-success"><strong>${{ dividend.total_payment }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center text-muted">No upcoming dividend payments</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
